@@ -1,0 +1,22 @@
+{
+	"Take Over the World": {
+		"Establish Evil Corporation": "Not Started",
+		"Henchmen": {
+			"Job Description": "Not Started",
+			"100 Pairs Black Shoulderpads": "Bought"
+		},
+		"Evil Lair": {
+			"Volcano Location": "Found, contacting my agent",
+			"Sharks" : {
+				"Lasers": "Bought",
+				"Sharks": "Endangered..."
+			}
+		}		
+	},
+	"Pet Search": {
+		"Muffins": "Too fluffy",
+		"Spot": "Too big",
+		"Scratchy": "Finally defeated by Itchy",
+		"Mr. Bigglesworth": "Frozen, and hairless"
+	}
+}

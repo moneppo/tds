@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<link rel="stylesheet" type="text/css" href="x-tag-components.css"/>
+  	<script type="text/javascript" src="x-tag-components.js"></script>
+		<template id="json-task-template">
+			<h3 id="title"></h3>
+			<div id="content"></div>
+  	</template>
+		<template id="json-item-template">
+			<div>
+				<span id="title"></span> : <span id="content"></span>
+			</div>
+  	</template>
+		<style>
+			json-task {
+				font-family: "Avenir";
+				border: 1px solid black;
+				border-radius: 15px;
+				padding: 2%;
+				display: inline-block;
+				margin: 2%;
+				min-width: 100px;
+				background: #9AF;
+			}
+			
+			json-task div #title {
+				font-weight: 600;
+			}
+			
+			json-task json-task {
+				background: #ABF;
+			}
+			
+			json-task json-task json-task {
+				background: #BCF;
+			}
+			
+			json-task h3 {
+				margin: 1%;
+			}
+			
+			json-task div {
+				margin: 1%;
+			}
+		</style>
+		<script>	
+			function get(url, then) {
+				var xmlhttp = new XMLHttpRequest();
+				xmlhttp.onreadystatechange = function() {
+  				if (xmlhttp.readyState==4 && xmlhttp.status==200) {
+    				then(xmlhttp.responseText);
+    			}
+				}
+				xmlhttp.open("GET",url,true);
+				xmlhttp.send();
+			}
+			
+			xtag.register('json-task', {
+  			lifecycle: {
+    			created: function() {
+						var tpl = document.getElementById('json-task-template').content;
+      			this.appendChild(tpl.cloneNode(true));
+						var self = this;
+					/*	if (this.src && this.src != "") {
+							console.log("loading...");
+							get(this.src, function(data) {
+								var json = JSON.parse(data);
+								self.setContentObject(json);
+							});
+						}*/
+    			}
+  			},
+				methods: {
+					setContentObject: function(o) {
+						for (var i in o) {
+							var child;
+							if (typeof o[i] === "object") {
+								child = document.createElement('json-task');
+								child.setTitle(i);
+								child.setContentObject(o[i]);
+							} else {
+								var tpl = document.getElementById('json-item-template').content;
+      					child = tpl.cloneNode(true);
+								xtag.query(child, "#title").forEach(function(e) {
+									xtag.innerHTML(e, i);
+								});
+								xtag.query(child, "#content").forEach(function(e) {
+									xtag.innerHTML(e, o[i]);
+								});
+							}
+							this.appendChild(child);
+						}
+					},
+					setTitle: function(t) {
+						xtag.query(this, "#title").forEach(function(e) {
+							xtag.innerHTML(e, t);
+						});
+					}
+				},
+				accessors: {
+    			src: {
+      			attribute: { string: "" },
+						set: function(d) {
+							var self = this;
+							if (d && d != "") {
+								get(d, function(data) {
+									var json = JSON.parse(data);
+									self.setContentObject(json);
+								});
+							}
+						}
+    			}
+				}
+			});
+			
+			xtag.register('json-tasklist', {
+				lifecycle: {
+    			created: function() {	
+					}
+				},
+				accessors: {
+    			src: {
+      			attribute: { string: "" },
+						set: function(d) {
+							var self = this;
+							if (d && d != "") {
+								get(d, function(data) {
+									var o = JSON.parse(data);
+									for (var i in o) {
+										if (typeof o[i] === "object") {
+											var child = document.createElement('json-task');
+											child.setTitle(i);
+											child.setContentObject(o[i]);
+											self.appendChild(child);
+										}
+									}
+								});
+							}
+						}
+    			}
+				}
+			})
+		</script>
+	</head>
+	<body>
+		<json-tasklist src="test.json"></json-tasklist>
+	</body>
+</html>
