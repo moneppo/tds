@@ -5,6 +5,8 @@ using namespace ci;
 using namespace ci::app;
 using namespace std;
 
+// Acts as a event dispatcher for all other tocs. Meant to be placed at the root level
+
 TocRoot::TocRoot( App* app ) : Toc(app)
 {
     
