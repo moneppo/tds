@@ -1,0 +1,219 @@
+#include "cinder/app/App.h"
+#include "cinder/app/RendererGl.h"
+#include "cinder/Path2d.h"
+#include "cinder/gl/gl.h"
+#include <list>
+
+#include <stdio.h>
+
+using namespace ci;
+using namespace ci::app;
+using namespace std;
+
+class Toc {
+    
+public:
+    typedef shared_ptr<Toc> Ptr;
+    typedef list<Toc::Ptr> List;
+    
+    enum State {
+        Text,
+        Image,
+        Settings
+    };
+
+    Toc( shared_ptr<app::App> app );
+    
+    virtual ~Toc();
+    
+    virtual void onMouseDown( MouseEvent e );
+    virtual void onMouseUp( MouseEvent e );
+    virtual void onMouseDrag( MouseEvent e );
+    virtual void onMouseMove( MouseEvent e );
+    
+    void Draw();
+    void PopulateFromFile( string name );
+    void InsertToc( Toc::Ptr toc );
+    
+    bool Active;
+    Toc::State ViewState;
+    Rectf Bounds;
+    
+protected:
+    void DrawFrame();
+    void DrawControls();
+    
+    void DrawText();
+    void DrawImage();
+    void DrawSettings();
+
+    Toc::List mChildren;
+    shared_ptr<app::App> mApp;
+    
+#if defined( CINDER_COCOA_TOUCH )
+    boost::signals2::connection mTouchesBegan, mTouchesMoved, mTouchesEnded;
+#else
+    boost::signals2::connection mMouseDown, mMouseUp, mMouseMove, mMouseDrag;
+#endif
+};
+
+class TocRoot : public Toc {
+public:
+    typedef shared_ptr<TocRoot> Ptr;
+    typedef list<TocRoot::Ptr> List;
+    
+    TocRoot( shared_ptr<app::App> app );
+    virtual ~TocRoot();
+    
+#if defined( CINDER_COCOA_TOUCH )
+    virtual void onTouchesBegan( TouchEvent e );
+    virtual void onTouchesMoved( TouchEvent e );
+    virtual void onTouchesEnded( TouchEvent e );
+#endif // CINDER_COCOA_TOUCH
+};
+
+// IMPLEMENTATION
+
+Toc::Toc( shared_ptr<app::App> app ) :
+    Active( false ),
+    mApp( app )
+{
+    mMouseDown = mApp->getWindow()->getSignalMouseDown().connect( bind( &TocRoot::onMouseDown, this, _1 ) );
+    mMouseUp = mApp->getWindow()->getSignalMouseUp().connect( bind( &TocRoot::onMouseUp, this, _1 ) );
+    mMouseMove = mApp->getWindow()->getSignalMouseMove().connect( bind( &TocRoot::onMouseMove, this, _1 ) );
+    mMouseDrag = mApp->getWindow()->getSignalMouseDrag().connect( bind( &TocRoot::onMouseDrag, this, _1 ) );
+}
+
+Toc::~Toc() {
+    mMouseDown.disconnect();
+    mMouseUp.disconnect();
+    mMouseMove.disconnect();
+    mMouseDrag.disconnect();
+}
+
+void Toc::InsertToc(Toc::Ptr toc) {
+    mChildren.push_back(toc);
+}
+
+void Toc::onMouseDown( MouseEvent e )
+{
+    vec2 p = e.getPos();
+    for (Toc::List::iterator it = mChildren.begin(); it != mChildren.end(); it++) {
+        Toc::Ptr toc = *it;
+        
+        if (toc->Active) {
+            toc->
+        }
+        if (toc->Bounds.contains(p)) {
+            toc->onMouseDown(e);
+            return;
+        }
+    }
+}
+
+void Toc::onMouseUp( MouseEvent e )
+{
+    vec2 p = e.getPos();
+    for (Toc::List::iterator it = mChildren.begin(); it != mChildren.end(); it++) {
+        Toc::Ptr toc = *it;
+        if (toc->Bounds.contains(p)) {
+            toc->onMouseUp(e);
+            return;
+        }
+    }
+}
+
+void Toc::onMouseDrag( MouseEvent e )
+{
+    vec2 p = e.getPos();
+    for (Toc::List::iterator it = mChildren.begin(); it != mChildren.end(); it++) {
+        Toc::Ptr toc = *it;
+        if (toc->Bounds.contains(p)) {
+            toc->onMouseDrag(e);
+            return;
+        }
+    }
+}
+
+void Toc::onMouseMove( MouseEvent e )
+{
+    vec2 p = e.getPos();
+    for (Toc::List::iterator it = mChildren.begin(); it != mChildren.end(); it++) {
+        Toc::Ptr toc = *it;
+        if (toc->Bounds.contains(p)) {
+            toc->onMouseMove(e);
+            return;
+        }
+    }
+}
+
+TocRoot::TocRoot(shared_ptr<app::App> app) : Toc(app)
+{
+    
+#if defined( CINDER_COCOA_TOUCH )
+    mTouchesBegan = mApp->getWindow()->getSignalTouchesBegan().connect( bind( &TocRoot::onTouchesBegan, this, _1 ) );
+    mTouchesMoved = mApp->getWindow()->getSignalTouchesMoved().connect( bind( &TocRoot::onTouchesMoved, this, _1 ) );
+    mTouchesEnded = mApp->getWindow()->getSignalTouchesEnded().connect( bind( &TocRoot::onTouchesEnded, this, _1 ) );
+#endif // CINDER_COCOA_TOUCH
+    
+}
+
+#if defined( CINDER_COCOA_TOUCH )
+
+void TocRoot::onTouchesBegan( TouchEvent e )
+{
+    vector<TouchEvent::Touch> touches = e.getTouches();
+    for( vector<TouchEvent::Touch>::iterator t = touches.begin(); t != touches.end(); t++ ) {
+        TouchEvent::Touch touch = *t;
+        for (Toc::List::iterator c = mChildren.begin(); c != mChildren.end(); c++) {
+            Toc::Ptr toc = *c;
+            if (toc->Bounds.contains(touch.getPos())) {
+                toc->onMouseDown
+                toc->onTouchesBegan(e);
+                break;
+            }
+        }
+    }
+}
+
+void TocRoot::onTouchesMoved( TouchEvent e )
+{
+    vector<TouchEvent::Touch> touches = e.getTouches();
+    for( vector<TouchEvent::Touch>::iterator t = touches.begin(); t != touches.end(); t++ ) {
+        TouchEvent::Touch touch = *t;
+        for (Toc::List::iterator c = mChildren.begin(); c != mChildren.end(); c++) {
+            Toc::Ptr toc = *c;
+            if (toc->Bounds.contains(touch.getPos())) {
+                toc->onTouchesMoved(e);
+                break;
+            }
+        }
+    }
+}
+
+void TocRoot::onTouchesEnded( TouchEvent e )
+{
+    vector<TouchEvent::Touch> touches = e.getTouches();
+    for( vector<TouchEvent::Touch>::iterator t = touches.begin(); t != touches.end(); t++ ) {
+        TouchEvent::Touch touch = *t;
+        for (Toc::List::iterator c = mChildren.begin(); c != mChildren.end(); c++) {
+            Toc::Ptr toc = *c;
+            if (toc->Bounds.contains(touch.getPos())) {
+                toc->onTouchesEnded(e);
+                break;
+            }
+        }
+    }
+}
+
+#endif// !CINDER_COCA_TOUCH
+
+TocRoot::~TocRoot() {
+    
+#if defined( CINDER_COCOA_TOUCH )
+    mTouchesBegan.disconnect();
+    mTouchesEnded.disconnect();
+    mTouchesMoved.disconnect();
+#endif // CINDER_COCOA_TOUCH
+    
+}
