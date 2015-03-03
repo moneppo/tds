@@ -15,68 +15,96 @@ using namespace std;
 TocControls::TocControls(Toc::Ptr master) :
 mMaster(master),
 mResizing(false),
-mMoving(false)
-{
-    Update();
-}
+mMoving(false),
+mInsertHover(false),
+mHandle(-24, -24, 0, 0)
+{}
 
 void TocControls::Draw() {
     DrawHandle( Color( 1.0f, 1.0f, 1.0f ) );
-        
-    vec2 pt1 = {mMaster->Bounds.x2 - 6, mMaster->Bounds.y2 + 6};
-    vec2 pt2 = {mMaster->Bounds.x2 + 6, mMaster->Bounds.y2 + 6};
-    vec2 pt3 = {mMaster->Bounds.x2 + 6, mMaster->Bounds.y2 - 6};
+    
+    vec2 pt1 = {mMaster->Size.x - 6, mMaster->Size.y + 6};
+    vec2 pt2 = {mMaster->Size.x + 6, mMaster->Size.y + 6};
+    vec2 pt3 = {mMaster->Size.x + 6, mMaster->Size.y - 6};
     gl::drawLine(pt1, pt2);
     gl::drawLine(pt2, pt3);
+    
+
 }
 
 void TocControls::DrawHandle( Color c ) {
     gl::color( c );
     vec2 center = mHandle.getCenter();
-    gl::drawSolidCircle(center, mHandle.getHeight() / 2.0f);
-
+    if (mInsertHover) {
+        gl::drawSolidCircle(center, (mHandle.getHeight() + 10) / 2.0f);
+    } else {
+        gl::drawSolidCircle(center, mHandle.getHeight() / 2.0f);
+    }
 }
 
-void TocControls::Update() {
-    mHandle = Rectf(mMaster->Bounds.x1 - 24,
-                    mMaster->Bounds.y1 - 24,
-                    mMaster->Bounds.x1,
-                    mMaster->Bounds.y1);
+bool TocControls::CheckAndInsert(vec2 p, Toc::Ptr toc) {
     
-    mResize = Rectf(mMaster->Bounds.x2 - 12,
-                    mMaster->Bounds.y2 - 12,
-                    mMaster->Bounds.x2 + 12,
-                    mMaster->Bounds.y2 + 12);
+    if (mMaster == toc) return false;
+    
+    if(inHandle(p)) {
+        mMaster->InsertToc(toc);
+        return true;
+    }
+    
+    for (Toc::List::iterator it = mMaster->mChildren.begin(); it != mMaster->mChildren.end(); it++) {
+        vec2 localPoint = p - mMaster->Position;
+        if ((*it)->Controls->CheckAndInsert(localPoint, toc)) {
+            return true;
+        }
+    }
+    
+    return false;
 }
 
 bool TocControls::inHandle( vec2 p ) {
     return mHandle.contains(p);
 }
 
-bool TocControls::onPointerDown(MouseEvent e) {
-    Update();
-    vec2 pos = e.getPos();
+bool TocControls::inResize( vec2 p ) {
+    mResize = Rectf(mMaster->Size.x - 12,
+                    mMaster->Size.y - 12,
+                    mMaster->Size.x + 12,
+                    mMaster->Size.y + 12);
+
+    return mResize.contains(p);
+}
+
+bool TocControls::onPointerDown(PointerEvent e) {
     
-    if (inHandle(pos)) {
+    if (inHandle(e.localPosition)) {
         mMoving = true;
         Toc::Dragging = true;
-        mRel = pos - mMaster->Bounds.getUpperLeft();
+        mStart = e.localPosition;
+
         return true;
     }
     
-    if (mResize.contains(pos)) {
+    if (inResize(e.localPosition)) {
         mResizing = true;
-         mRel = pos - mMaster->Bounds.getLowerRight();
+        mStart = e.localPosition - mMaster->Size;
         return true;
     }
     
     return false;
 }
 
-bool TocControls::onPointerUp(MouseEvent e) {
-    Update();
+bool TocControls::onPointerUp(PointerEvent e) {
     bool wasControlling = mMoving || mResizing;
     
+    if (mMoving) {
+        for (Toc::List::iterator it = mMaster->_Roots.begin(); it != mMaster->_Roots.end(); it++) {
+            vec2 pt = e.globalPosition - (*it)->Position;
+            if ((*it)->Controls->CheckAndInsert(pt, mMaster)) {
+                break;
+            }
+        }
+    }
+
     mMoving = false;
     Toc::Dragging = false;
     mResizing = false;
@@ -84,26 +112,17 @@ bool TocControls::onPointerUp(MouseEvent e) {
     return wasControlling;
 }
 
-bool TocControls::onPointerMove(MouseEvent e) {
-    Update();
+bool TocControls::onPointerMove(PointerEvent e) {
     return mMoving || mResizing;
 }
 
-bool TocControls::onPointerDrag(MouseEvent e) {
-    Update();
+bool TocControls::onPointerDrag(PointerEvent e) {
     if (mMoving) {
-        vec2 size = mMaster->Bounds.getSize();
-        vec2 pos = e.getPos();
-        pos -= mRel;
-        mMaster->Bounds.set(pos.x, pos.y, pos.x + size.x, pos.y + size.y);
+        mMaster->Position = e.parentPosition;
     }
     
     if (mResizing) {
-        vec2 pos = e.getPos();
-        pos -= mRel;
-        mMaster->Bounds.x2 = pos.x;
-        mMaster->Bounds.y2 = pos.y;
+        mMaster->Size = e.localPosition;
     }
-    
     return false;
 }

@@ -16,26 +16,28 @@ class TocControls {
     
 public:
     TocControls(std::shared_ptr<Toc> master);
-    bool onPointerDown( cinder::app::MouseEvent e );
-    bool onPointerUp( cinder::app::MouseEvent e );
-    bool onPointerDrag( cinder::app::MouseEvent e );
-    bool onPointerMove( cinder::app::MouseEvent e );
+    bool onPointerDown( PointerEvent e );
+    bool onPointerUp( PointerEvent e );
+    bool onPointerDrag( PointerEvent e );
+    bool onPointerMove( PointerEvent e );
     
     void Draw();
     void DrawHandle( ci::Color c );
     
-    bool inHandle( ci::vec2 p);
+    bool CheckAndInsert(ci::vec2 p, Toc::Ptr toc);
     
-    void Update();
+    bool inHandle( ci::vec2 p);
+    bool inResize( ci::vec2 p);
 private:
     std::shared_ptr<Toc> mMaster;
     bool mMoving;
     bool mResizing;
+    bool mInsertHover;
     
     ci::Rectf mHandle;
     ci::Rectf mResize;
     
-    ci::vec2 mRel;
+    ci::vec2 mStart;
 };
 
 

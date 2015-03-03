@@ -3,8 +3,8 @@
 #include "cinder/Path2d.h"
 #include "cinder/gl/gl.h"
 #include <vector>
-#include "Toc.h"
-#include "TocRoot.h"
+#include "Noc.h"
+#include "HandleControl.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -21,61 +21,97 @@ public:
     void mouseDown( MouseEvent event );
     void mouseUp( MouseEvent event );
     void mouseDrag( MouseEvent event );
+    void mouseMove( MouseEvent event );
     void keyDown( KeyEvent event );
     void draw();
-    
-    std::vector<Path2d>	mPaths;
-    TocRoot::Ptr m_toc1;
-    TocRoot::Ptr m_toc2;
 
+    Noc::Ref root;
+    NocControl::List controls;
 };
 
 void Path2dApp::setup() {
-    m_toc1 = make_shared<TocRoot>(this);
-    m_toc2 = make_shared<TocRoot>(this);
+    root = make_shared<Noc>(this);
+    root->Size.x = 400;
+    root->Size.y = 400;
+    Noc::Ref child = make_shared<Noc>(this);
+    root->InsertNoc(child);
+    controls.push_back(make_shared<HandleControl>());
 }
 
 void Path2dApp::update() {
+    for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
+        (*it)->Update(0);
+    }
 }
 
 void Path2dApp::mouseDown( MouseEvent event )
 {
-  /*  Path2d p;
-    mPaths.push_back(p);
-    mPaths.rbegin()->moveTo(event.getPos());*/
+    PointerEvent p =
+        PointerEvent(vec2(event.getPos()) - root->Position,
+                     event.getPos(),
+                     event.getPos(),
+                     PointerEvent::Left);
+    for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
+        (*it)->onPointerDown(p);
+    }
+    root->onPointerDown(p);
 }
 
 void Path2dApp::mouseDrag( MouseEvent event )
 {
-   // mPaths.rbegin()->lineTo(event.getPos());
+    PointerEvent p =
+        PointerEvent(vec2(event.getPos()) - root->Position,
+                 event.getPos(),
+                 event.getPos(),
+                 PointerEvent::Left);
+    for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
+        (*it)->onPointerDrag(p);
+    }
+    root->onPointerDrag(p);
 }
 
 void Path2dApp::mouseUp( MouseEvent event )
 {
+    PointerEvent p =
+        PointerEvent(vec2(event.getPos()) - root->Position,
+                 event.getPos(),
+                 event.getPos(),
+                 PointerEvent::Left);
+    for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
+        (*it)->onPointerUp(p);
+    }
+    root->onPointerUp(p);
+
+}
+
+void Path2dApp::mouseMove( MouseEvent event )
+{
+    PointerEvent p =
+        PointerEvent(vec2(event.getPos()) - root->Position,
+                 event.getPos(),
+                 event.getPos(),
+                 PointerEvent::Left);
+    for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
+        (*it)->onPointerMove(p);
+    }
+
+    root->onPointerMove(p);
 }
 
 void Path2dApp::keyDown( KeyEvent event )
 {
-    if( event.getChar() == 'x' )
-        mPaths.clear();
 }
 
 void Path2dApp::draw()
 {
     gl::clear( Color( 0.0f, 0.1f, 0.2f ) );
+    gl::enable(GL_SCISSOR_TEST);
     gl::enableAlphaBlending();
     
-    gl::color( Color( 1.0f, 0.5f, 0.25f ) );
-    for(std::vector<Path2d>::iterator p = mPaths.begin(); p != mPaths.end(); p++) {
-        if( p->getNumSegments() > 1 ) {
-            gl::draw( *p , 100);
-            gl::drawLine(vec2(0,0), vec2(1,1));
-        
-        }
+    root->Draw();
+    for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
+        (*it)->Draw();
     }
-    
-    m_toc1->Draw();
-    m_toc2->Draw();
 }
 
 

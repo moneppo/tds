@@ -7,7 +7,14 @@ using namespace std;
 
 // Acts as a event dispatcher for all other tocs. Meant to be placed at the root level
 
-TocRoot::TocRoot( App* app ) : Toc(app)
+Toc::Ptr TocRoot::CreateRoot( ci::app::App* app ) {
+    Toc::Ptr result = make_shared<TocRoot>(app);
+    result->Ref = result;
+    _Roots.push_back(result);
+    return result;
+}
+
+TocRoot::TocRoot( App* app ) : Toc( app )
 {
     
 #if defined( CINDER_COCOA_TOUCH )
@@ -94,38 +101,58 @@ void TocRoot::onTouchesEnded( TouchEvent e )
 
 void TocRoot::onPointerDown( MouseEvent event )
 {
-    if ( Active() && Controls->onPointerDown( event ) ) {
+    PointerEvent pointerEvent;
+    pointerEvent.localPosition = vec2(event.getPos()) - Position;
+    pointerEvent.globalPosition = event.getPos();
+    pointerEvent.parentPosition = event.getPos();
+    pointerEvent.type = PointerEvent::Left;
+    if ( Active() && Controls->onPointerDown( pointerEvent ) ) {
         return;
     }
     
-    Toc::onPointerDown(event);
+    Toc::onPointerDown(pointerEvent);
 }
 
 void TocRoot::onPointerUp( MouseEvent event )
 {
-    if ( Active() && Controls->onPointerUp( event ) ) {
+    PointerEvent pointerEvent;
+    pointerEvent.localPosition = vec2(event.getPos()) - Position;
+    pointerEvent.globalPosition = event.getPos();
+    pointerEvent.parentPosition = event.getPos();
+    pointerEvent.type = PointerEvent::Left;
+    if ( Active() && Controls->onPointerUp( pointerEvent ) ) {
         return;
     }
     
-    Toc::onPointerUp(event);
+    Toc::onPointerUp(pointerEvent);
 }
 
 void TocRoot::onPointerDrag( MouseEvent event )
 {
-    if ( Active() && Controls->onPointerDrag( event ) ) {
+    PointerEvent pointerEvent;
+    pointerEvent.localPosition = vec2(event.getPos()) - Position;
+    pointerEvent.globalPosition = event.getPos();
+    pointerEvent.parentPosition = event.getPos();
+    pointerEvent.type = PointerEvent::Left;
+    if ( Active() && Controls->onPointerDrag( pointerEvent ) ) {
         return;
     }
     
-    Toc::onPointerDrag(event);
+    Toc::onPointerDrag(pointerEvent);
 }
 
 void TocRoot::onPointerMove( MouseEvent event )
 {
-    if ( Active() && Controls->onPointerMove( event ) ) {
+    PointerEvent pointerEvent;
+    pointerEvent.localPosition = vec2(event.getPos()) - Position;
+    pointerEvent.globalPosition = event.getPos();
+    pointerEvent.parentPosition = event.getPos();
+    pointerEvent.type = PointerEvent::Left;
+    if ( Active() && Controls->onPointerMove( pointerEvent ) ) {
         return;
     }
     
-    Toc::onPointerMove(event);
+    Toc::onPointerMove(pointerEvent);
 }
 
 #endif // CINDER_COCOA_TOUCH

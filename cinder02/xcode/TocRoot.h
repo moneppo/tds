@@ -16,6 +16,7 @@ public:
     typedef std::shared_ptr<TocRoot> Ptr;
     typedef std::list<TocRoot::Ptr> List;
     
+    static Toc::Ptr CreateRoot( ci::app::App* app );
     TocRoot( ci::app::App* app );
     virtual ~TocRoot();
     
@@ -26,6 +27,8 @@ public:
     virtual void onTouchesEnded( ci::TouchEvent e );
     
     Toc::Ptr toToc();
+    
+protected:
     
 private:
     ci::signals::scoped_connection mTouchesBegan, mTouchesMoved, mTouchesEnded;
