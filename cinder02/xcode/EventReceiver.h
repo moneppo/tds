@@ -55,6 +55,7 @@ public:
     void onPointerMove(const PointerEvent& e);
     
     void Capture(const PointerEvent& e);
+    bool Captured(const PointerEvent& e);
     
     PointerEvent::Handler PointerUp;
     PointerEvent::Handler PointerDown;

@@ -17,6 +17,7 @@
 #include <stdio.h>
 
 #include "EventReceiver.h"
+#include "PaintStroke.h"
 
 class Noc : public EventReceiver {
 
@@ -74,6 +75,7 @@ protected:
     static Noc::Ref _Active;
     ci::app::App* mApp;
     Noc::List mChildren;
+    std::vector<PaintStroke> mStrokes;
     
 };
 

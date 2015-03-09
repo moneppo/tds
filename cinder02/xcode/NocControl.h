@@ -33,8 +33,13 @@ public:
     
     virtual ~NocControl() {}
 
-    virtual void Update(float t) = 0;
-    virtual void Draw() = 0;
+    virtual void Update(float t) {}
+    virtual void Draw() {
+        ci::Rectf outline =
+            ci::Rectf(Position.x, Position.y, Position.x + Size.x, Position.y + Size.y);
+        ci::gl::color(0.2, 0.2, 0.2);
+        ci::gl::drawSolidRect(outline);
+    }
     
     ci::vec2 Position;
     ci::vec2 Size;

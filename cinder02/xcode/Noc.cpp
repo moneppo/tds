@@ -45,7 +45,9 @@ Parent(nullptr)
         {
             SetActive();
             Capture(e);
-            // Start drawing
+            auto paintStroke = PaintStroke();
+            paintStroke.AddPoint(e.localPos);
+            mStrokes.push_back(paintStroke);
         }
 
     };
@@ -78,7 +80,7 @@ Parent(nullptr)
             e.localPos.x > 0 &&
             e.localPos.y > 0)
         {
-            // Draw here
+            mStrokes[mStrokes.size() - 1].AddPoint(e.localPos);
         }
     };
     
@@ -106,12 +108,14 @@ void Noc::Draw(vec2 offset) {
     }
     gl::drawStrokedRect(r);
     
-
-    vec2 base = offset + Position;
-    base.y = mApp->getWindowHeight() - (base.y + Size.y);
-    gl::scissor(base, Size);
+    for (vector<PaintStroke>::iterator it = mStrokes.begin(); it != mStrokes.end(); ++it) {
+        it->Draw();
+    }
     
     for (Noc::List::iterator it = mChildren.begin(); it != mChildren.end(); it++) {
+        vec2 base = offset + Position;
+        base.y = mApp->getWindowHeight() - (base.y + Size.y);
+        gl::scissor(base, Size);
         (*it)->Draw(offset + Position);
     }
     gl::popModelMatrix();

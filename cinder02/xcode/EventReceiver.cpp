@@ -25,11 +25,10 @@ bool EventReceiver::onPointerDown(const PointerEvent& e)
 
 void EventReceiver::onPointerUp(const PointerEvent& e)
 {
-    if (_Capture[e.type].get() == this && PointerUp) {
-        PointerUp(e);
+    if (PointerUp) PointerUp(e);
+    if (Captured(e)) {
+        _Capture[e.type] = nullptr;
     }
-    
-    _Capture[e.type] = nullptr;
 }
 
 void EventReceiver::onPointerDrag(const PointerEvent& e)
@@ -47,4 +46,8 @@ void EventReceiver::onPointerMove(const PointerEvent& e)
 void EventReceiver::Capture(const PointerEvent& e)
 {
     _Capture[e.type] = shared_from_this();
+}
+
+bool EventReceiver::Captured(const PointerEvent& e) {
+    return _Capture[e.type].get() == this;
 }

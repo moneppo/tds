@@ -16,6 +16,8 @@ DecoratorControl(vec2(0,0))
 {
     Size = vec2(24, 24);
     PointerDown = [&](const PointerEvent& e) {
+        if (mFollowActive && !Noc::GetActive()) return;
+        
         Rectf outline = Rectf(Position.x, Position.y,
                                 Position.x + Size.x,
                                 Position.y + Size.y);

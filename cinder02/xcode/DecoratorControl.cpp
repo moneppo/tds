@@ -34,10 +34,5 @@ void DecoratorControl::Draw()
     if (mFollowActive && !Noc::GetActive())
         return;
     
-    Rectf outline = Rectf(Position.x,
-                          Position.y,
-                          Position.x + Size.x,
-                          Position.y + Size.y);
-    gl::color(0.2, 0.2, 0.2);
-    gl::drawSolidRect(outline);
+    NocControl::Draw();
 }
