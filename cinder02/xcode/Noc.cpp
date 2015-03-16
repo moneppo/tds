@@ -13,6 +13,7 @@ using namespace std;
 using namespace ci;
 
 Noc::Ref Noc::_Active = nullptr;
+Noc::Ref Noc::_Root = nullptr;
 
 PointerEvent PointerEvent::inherit(vec2 origin) const
 {
@@ -21,6 +22,15 @@ PointerEvent PointerEvent::inherit(vec2 origin) const
         localPos,
         globalPos,
         type);
+}
+
+Noc::Ref Noc::CreateRoot(ci::app::App* app)
+{
+    auto result = make_shared<Noc>(app);
+    result->Position = vec2(0,0);
+    result->Size = app->getWindowSize();
+    _Root = result;
+    return result;
 }
 
 Noc::Noc(ci::app::App* app) :
@@ -33,21 +43,25 @@ Parent(nullptr)
     {
         for (Noc::List::iterator it = mChildren.begin(); it != mChildren.end(); ++it) {
             PointerEvent childEvent = e.inherit((*it)->Position);
-            if ((*it)->onPointerDown(childEvent)) {
+            (*it)->onPointerDown(childEvent);
+            if (_Capture[childEvent.type] != nullptr)
                 return;
-            }
         }
         
+       
         if ( e.localPos.x <= Size.x &&
             e.localPos.y <= Size.y &&
             e.localPos.x > 0 &&
             e.localPos.y > 0)
         {
-            SetActive();
             Capture(e);
+            
+            
             auto paintStroke = PaintStroke();
             paintStroke.AddPoint(e.localPos);
             mStrokes.push_back(paintStroke);
+            
+            SetActive();
         }
 
     };
@@ -75,7 +89,9 @@ Parent(nullptr)
             (*it)->onPointerDrag(childEvent);
         }
         
-        if (e.localPos.x <= Size.x &&
+        
+        if (Captured(e) &&
+            e.localPos.x <= Size.x &&
             e.localPos.y <= Size.y &&
             e.localPos.x > 0 &&
             e.localPos.y > 0)
@@ -96,8 +112,15 @@ Parent(nullptr)
 Noc::~Noc()
 {}
 
-void Noc::Draw(vec2 offset) {
-    Rectf r = Rectf(0, 0, Size.x, Size.y);
+void Noc::Scissor(Rectf scissorRect) {
+    float h = mApp->getWindowHeight();
+    vec2 p = {scissorRect.x1, h - scissorRect.y2};
+    gl::scissor(p, scissorRect.getSize());
+   // gl::color(1,0,0,.1);
+   // gl::drawSolidRect({-10000, -10000, 10000, 10000});
+}
+
+void Noc::Draw(Rectf clip) {
     gl::pushModelMatrix();
     gl::translate(Position.x, Position.y);
     
@@ -106,23 +129,24 @@ void Noc::Draw(vec2 offset) {
     } else {
         gl::color(Color(0.5f, 0.5f, 0.5f));
     }
-    gl::drawStrokedRect(r);
+    
+    gl::drawStrokedRect(Rectf(0, 0, Size.x, Size.y));
+    
+    Rectf localClip = Rectf(Position + clip.getUpperLeft(),
+                            Position + clip.getUpperLeft() + Size);
+    Rectf newClip = localClip.getClipBy(clip);
+    Scissor(newClip);
     
     for (vector<PaintStroke>::iterator it = mStrokes.begin(); it != mStrokes.end(); ++it) {
         it->Draw();
     }
     
     for (Noc::List::iterator it = mChildren.begin(); it != mChildren.end(); it++) {
-        vec2 base = offset + Position;
-        base.y = mApp->getWindowHeight() - (base.y + Size.y);
-        gl::scissor(base, Size);
-        (*it)->Draw(offset + Position);
+        (*it)->Draw(newClip);
     }
+    
     gl::popModelMatrix();
-    if (!Parent) {
-        gl::scissor(vec2(0,0), mApp->getWindowSize());
-    }
-
+    Scissor(clip);
 }
 
 void Noc::PopulateFromFile(std::string name) {

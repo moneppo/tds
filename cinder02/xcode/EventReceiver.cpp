@@ -33,9 +33,7 @@ void EventReceiver::onPointerUp(const PointerEvent& e)
 
 void EventReceiver::onPointerDrag(const PointerEvent& e)
 {
-    if (_Capture[e.type].get() == this && PointerDrag) {
-        PointerDrag(e);
-    }
+    if (PointerDrag) PointerDrag(e);
 }
 
 void EventReceiver::onPointerMove(const PointerEvent& e)

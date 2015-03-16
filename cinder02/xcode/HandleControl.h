@@ -21,6 +21,7 @@ public:
     
 protected:
     ci::vec2 mStart;
+    bool mDragging;
 };
 
 #endif /* defined(__cinder02__HandleControl__) */

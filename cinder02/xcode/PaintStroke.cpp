@@ -138,16 +138,16 @@ void drawPath(const vector<vec2>& points) {
         vec2 point_bd = point_b + (point_d - point_b) * 0.5f;
         vec2 point_df = point_d + (point_f - point_d) * 0.5f;
         
-        Path2d path;
-        path.moveTo(point_bd);
-        path.quadTo(point_d, point_df);
+        Shape2d s;
+        s.moveTo(point_bd);
+        s.quadTo(point_d, point_df);
         
-        path.lineTo(point_ce);
-        path.quadTo(point_c, point_ac);
+        s.lineTo(point_ce);
+        s.quadTo(point_c, point_ac);
         
-        path.close();
+        s.close();
         
-        gl::draw(path);
+        gl::drawSolid(s);
         
     }
 }
@@ -161,5 +161,6 @@ void PaintStroke::AddPoint(vec2 pt)
 
 void PaintStroke::Draw()
 {
+    gl::color(.8,.8,.8);
     drawPath(mPoints);
 }

@@ -5,6 +5,7 @@
 #include <vector>
 #include "Noc.h"
 #include "HandleControl.h"
+#include "ResizeControl.h"
 #include "PaintStroke.h"
 
 using namespace ci;
@@ -26,26 +27,20 @@ public:
     void keyDown( KeyEvent event );
     void draw();
 
-    Noc::List roots;
+    Noc::Ref root;
     NocControl::List controls;
 };
 
-// TODO: RESIZE
-//       HIERARCHY DRAWING
-//       ROOT AS FULL SCREEN
-//       INSERT TOC
+// TODO: INSERT TOC
 
 void Path2dApp::setup() {
-    auto root = make_shared<Noc>(this);
-    root->Position = vec2(40,40);
-    root->Size = vec2(200,200);
-    Noc::Ref child = make_shared<Noc>(this);
-    root->InsertNoc(child);
-    roots.push_back(root);
+    root = Noc::CreateRoot(this);
     controls.push_back(make_shared<HandleControl>());
+    controls.push_back(make_shared<ResizeControl>());
     auto newControl = make_shared<NocControl>();
     newControl->Size = vec2(20,20);
     newControl->Position = vec2(0, 0);
+    
     newControl->PointerDown = [=](PointerEvent e){
         if ( e.localPos.x <= newControl->Size.x &&
             e.localPos.y <= newControl->Size.y &&
@@ -55,14 +50,15 @@ void Path2dApp::setup() {
             newControl->Capture(e);
         }
     };
+    
     newControl->PointerUp = [=](PointerEvent e) {
         if (newControl->Captured(e)) {
-            Noc::Ref root = make_shared<Noc>(this);
-            roots.push_back(root);
+            Noc::Ref n = make_shared<Noc>(this);
+            root->InsertNoc(n);
         }
     };
-    controls.push_back(newControl);
     
+    controls.push_back(newControl);
 }
 
 void Path2dApp::update() {
@@ -81,10 +77,8 @@ void Path2dApp::mouseDown( MouseEvent event )
     for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
         (*it)->onPointerDown(p);
     }
-    for (Noc::List::iterator it = roots.begin(); it != roots.end(); ++it) {
-        PointerEvent rootPoint = p.inherit((*it)->Position);
-        (*it)->onPointerDown(rootPoint);
-    }
+    
+    root->onPointerDown(p);
 }
 
 void Path2dApp::mouseDrag( MouseEvent event )
@@ -97,10 +91,8 @@ void Path2dApp::mouseDrag( MouseEvent event )
     for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
         (*it)->onPointerDrag(p);
     }
-    for (Noc::List::iterator it = roots.begin(); it != roots.end(); ++it) {
-        PointerEvent rootPoint = p.inherit((*it)->Position);
-        (*it)->onPointerDrag(rootPoint);
-    }
+    
+    root->onPointerDrag(p);
 
 }
 
@@ -114,10 +106,7 @@ void Path2dApp::mouseUp( MouseEvent event )
     for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
         (*it)->onPointerUp(p);
     }
-    for (Noc::List::iterator it = roots.begin(); it != roots.end(); ++it) {
-        PointerEvent rootPoint = p.inherit((*it)->Position);
-        (*it)->onPointerUp(rootPoint);
-    }
+    root->onPointerUp(p);
 
 }
 
@@ -131,10 +120,7 @@ void Path2dApp::mouseMove( MouseEvent event )
     for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
         (*it)->onPointerMove(p);
     }
-    for (Noc::List::iterator it = roots.begin(); it != roots.end(); ++it) {
-        PointerEvent rootPoint = p.inherit((*it)->Position);
-        (*it)->onPointerMove(rootPoint);
-    }
+    root->onPointerMove(p);
 }
 
 void Path2dApp::keyDown( KeyEvent event )
@@ -147,9 +133,9 @@ void Path2dApp::draw()
     gl::enable(GL_SCISSOR_TEST);
     gl::enableAlphaBlending();
     
-    for (Noc::List::iterator it = roots.begin(); it != roots.end(); ++it) {
-        (*it)->Draw();
-    }
+    root->Draw(getWindowBounds());
+    
+    gl::scissor(vec2(0,0), getWindowSize());
 
     for (NocControl::List::iterator it = controls.begin(); it != controls.end(); ++it) {
         (*it)->Draw();

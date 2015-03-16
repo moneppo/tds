@@ -27,11 +27,14 @@ public:
 
     Noc(ci::app::App* app);
     
+    static Noc::Ref CreateRoot(ci::app::App* app);
+    
     virtual ~Noc();
     
-    void Draw(ci::vec2 offset = {0,0});
+    void Draw(ci::Rectf clip);
     void PopulateFromFile(std::string name);
     void InsertNoc(Noc::Ref noc);
+    void Scissor(ci::Rectf r);
     
     bool Active() {
         return _Active == shared_from_this();
@@ -67,12 +70,30 @@ public:
         Position = result;
     }
     
+    static Noc::Ref Root() {
+        return _Root;
+    }
+    
+    template<typename F>
+    void ApplyToChildren(F func)
+    {
+        for (Noc::List::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
+        {
+            func(*it);
+            (*it)->ApplyToChildren(func);
+        }
+    }
+
+    
+    Noc::List Children() {return mChildren;}
+    
     ci::vec2 Position;
     ci::vec2 Size;
     Noc::Ref Parent;
     
 protected:
     static Noc::Ref _Active;
+    static Noc::Ref _Root;
     ci::app::App* mApp;
     Noc::List mChildren;
     std::vector<PaintStroke> mStrokes;
